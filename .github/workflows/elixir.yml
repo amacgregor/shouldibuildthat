@@ -1,0 +1,31 @@
+name: Elixir CI
+
+on: push
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    container:
+      image: elixir:1.9.1-slim
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Install Dependencies
+      run: |
+        apt-get update && apt-get -y install postgresql-client
+        mix local.hex --force
+        mix local.rebar --force
+        mix deps.get --only test
+        mix ecto.setup
+    - name: Check Style and Format
+      run: |
+        mix format --check-formatted
+        mix credo --ignore refactor
+    - name: Run Tests
+      run: |
+        mix ecto.drop
+        mix ecto.create
+        mix ecto.migrate
+        mix test
